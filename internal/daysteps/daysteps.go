@@ -37,40 +37,14 @@ func parsePackage(data string) (int, time.Duration, error) {
 	}
 
 	// Get walk duration
-	hInd, mInd := strings.IndexByte(values[1], 'h'), strings.IndexByte(values[1], 'm')
-
-	// Empty or invalid time
-	if hInd == -1 && mInd == -1 {
-		return 0, 0, errors.New("invalid time")
+	walkDuration, err := time.ParseDuration(values[1])
+	if err != nil {
+		return 0, 0, err
 	}
 
-	var hours, minutes float64
-
-	// Get hours and minutes
-	if hInd != -1 {
-		hours, err = strconv.ParseFloat(values[1][0:hInd], 64)
-		if err != nil {
-			return 0, 0, err
-		}
-	} else {
-		hours = 0
+	if walkDuration <= 0 {
+		return 0, 0, errors.New("too small time")
 	}
-
-	if mInd != -1 {
-		minutes, err = strconv.ParseFloat(values[1][hInd+1:mInd], 64)
-		if err != nil {
-			return 0, 0, err
-		}
-	} else {
-		minutes = 0
-	}
-
-	// Wrong numbers in duration
-	if hours <= 0 && minutes <= 0 || hours < 0 || minutes < 0 {
-		return 0, 0, errors.New("Duration smaller or equil 0")
-	}
-
-	walkDuration := time.Duration(hours*float64(time.Hour) + minutes*float64(time.Minute))
 
 	return stepsCount, walkDuration, nil
 }
@@ -79,7 +53,7 @@ func DayActionInfo(data string, weight, height float64) string {
 	// Extra validating
 	stepsCount, walkDuration, err := parsePackage(data)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return ""
 	}
 	if stepsCount <= 0 {
@@ -91,7 +65,7 @@ func DayActionInfo(data string, weight, height float64) string {
 	distanceKm := distance / mInKm
 	kkall, err := spentcalories.WalkingSpentCalories(stepsCount, weight, height, walkDuration)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return ""
 	}
 

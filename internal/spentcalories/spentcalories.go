@@ -39,7 +39,7 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 		return 0, "", 0, err
 	}
 
-	if walkDuration.Nanoseconds() <= 0 {
+	if walkDuration <= 0 {
 		return 0, "", 0, errors.New("walk duration smaller or equil 0")
 	}
 
