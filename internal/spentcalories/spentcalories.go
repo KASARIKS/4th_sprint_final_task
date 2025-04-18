@@ -17,33 +17,51 @@ const (
 	walkingCaloriesCoefficient = 0.5  // коэффициент для расчета калорий при ходьбе
 )
 
+func splitData(data string) ([]string, error) {
+	splitedData := strings.Split(data, ",")
+	if len(splitedData) != 3 {
+		return []string{}, errors.New("wrong data string format")
+	}
+
+	return splitedData, nil
+}
+
+func getStepsCount(steps string) (int, error) {
+	stepsCount, err := strconv.Atoi(steps)
+	if stepsCount <= 0 && err == nil {
+		return 0, errors.New("steps count smaller or equil 0")
+	}
+
+	return stepsCount, err
+}
+
+func getWalkDuration(duration string) (time.Duration, error) {
+	walkDuration, err := time.ParseDuration(duration)
+	if walkDuration <= 0 && err == nil {
+		return 0, errors.New("walk duration smaller or equil 0")
+	}
+	return walkDuration, err
+}
+
 func parseTraining(data string) (int, string, time.Duration, error) {
-	values := strings.Split(data, ",")
-	if len(values) != 3 {
-		return 0, "", 0, errors.New("wrong data string format")
+	splitedData, err := splitData(data)
+	if err != nil {
+		return 0, "", 0, err
 	}
 
 	// Validate steps count
-	stepsCount, err := strconv.Atoi(values[0])
+	stepsCount, err := getStepsCount(splitedData[0])
 	if err != nil {
 		return 0, "", 0, err
-	}
-
-	if stepsCount <= 0 {
-		return 0, "", 0, errors.New("steps count smaller or equil 0")
 	}
 
 	// Validate walkDuration
-	walkDuration, err := time.ParseDuration(values[2])
+	walkDuration, err := getWalkDuration(splitedData[2])
 	if err != nil {
 		return 0, "", 0, err
 	}
 
-	if walkDuration <= 0 {
-		return 0, "", 0, errors.New("walk duration smaller or equil 0")
-	}
-
-	return stepsCount, values[1], walkDuration, nil
+	return stepsCount, splitedData[1], walkDuration, nil
 }
 
 func distance(steps int, height float64) float64 {
@@ -101,22 +119,31 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 	return res, nil
 }
 
-func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
-	// Validate all paramaters
+func validateInfo(steps int, weight, height float64, duration time.Duration) error {
 	if steps <= 0 {
-		return 0, errors.New("steps are smaller or equil 0")
+		return errors.New("steps are smaller or equil 0")
 	}
 
 	if weight <= 0 {
-		return 0, errors.New("weight is smaller or equil 0")
+		return errors.New("weight is smaller or equil 0")
 	}
 
 	if height <= 0 {
-		return 0, errors.New("height is smaller or equil 0")
+		return errors.New("height is smaller or equil 0")
 	}
 
 	if duration <= 0 {
-		return 0, errors.New("duration is smaller or equil 0")
+		return errors.New("duration is smaller or equil 0")
+	}
+
+	return nil
+}
+
+func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
+	// Validate all paramaters
+	err := validateInfo(steps, weight, height, duration)
+	if err != nil {
+		return 0, err
 	}
 
 	// Caclulate calories
@@ -129,20 +156,9 @@ func RunningSpentCalories(steps int, weight, height float64, duration time.Durat
 
 func WalkingSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	// Validate all paramaters
-	if steps <= 0 {
-		return 0, errors.New("steps are smaller or equil 0")
-	}
-
-	if weight <= 0 {
-		return 0, errors.New("weight is smaller or equil 0")
-	}
-
-	if height <= 0 {
-		return 0, errors.New("height is smaller or equil 0")
-	}
-
-	if duration <= 0 {
-		return 0, errors.New("duration is smaller or equil 0")
+	err := validateInfo(steps, weight, height, duration)
+	if err != nil {
+		return 0, err
 	}
 
 	// Caclulate calories

@@ -18,51 +18,68 @@ const (
 	mInKm = 1000
 )
 
+func splitData(data string) ([]string, error) {
+	splitedData := strings.Split(data, ",")
+	if len(splitedData) != 2 {
+		return []string{}, errors.New("wrong string format")
+	}
+
+	return splitedData, nil
+}
+
+func getStepsCount(steps string) (int, error) {
+	stepsCount, err := strconv.Atoi(steps)
+	if stepsCount <= 0 && err == nil {
+		return 0, errors.New("amount of steps equil 0")
+	}
+
+	return stepsCount, err
+}
+
+func getWalkDuration(duration string) (time.Duration, error) {
+	walkDuration, err := time.ParseDuration(duration)
+	if walkDuration <= 0 && err == nil {
+		return 0, errors.New("too small time")
+	}
+
+	return walkDuration, err
+}
+
 func parsePackage(data string) (int, time.Duration, error) {
-	// First validating
-	values := strings.Split(data, ",")
-
-	if len(values) != 2 {
-		return 0, 0, errors.New("wrong string format")
-	}
-
-	// Get steps Count
-	stepsCount, err := strconv.Atoi(values[0])
+	splitedData, err := splitData(data)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	if stepsCount <= 0 {
-		return 0, 0, errors.New("amount of steps equil 0")
-	}
-
-	// Get walk duration
-	walkDuration, err := time.ParseDuration(values[1])
+	stepsCount, err := getStepsCount(splitedData[0])
 	if err != nil {
 		return 0, 0, err
 	}
 
-	if walkDuration <= 0 {
-		return 0, 0, errors.New("too small time")
+	walkDuration, err := getWalkDuration(splitedData[1])
+	if err != nil {
+		return 0, 0, err
 	}
 
 	return stepsCount, walkDuration, nil
 }
 
+func distanceInKilometres(stepsCount int) float64 {
+	distance := stepLength * float64(stepsCount)
+	distanceKm := distance / mInKm
+	return distanceKm
+}
+
 func DayActionInfo(data string, weight, height float64) string {
-	// Extra validating
+	// Get parsed statistics
 	stepsCount, walkDuration, err := parsePackage(data)
 	if err != nil {
 		log.Print(err)
 		return ""
 	}
-	if stepsCount <= 0 {
-		return ""
-	}
 
 	// Count result data
-	distance := stepLength * float64(stepsCount)
-	distanceKm := distance / mInKm
+	distanceKm := distanceInKilometres(stepsCount)
 	kkall, err := spentcalories.WalkingSpentCalories(stepsCount, weight, height, walkDuration)
 	if err != nil {
 		log.Print(err)
